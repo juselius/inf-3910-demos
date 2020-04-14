@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <Compile Include="CPS.fs" />
+    <Compile Include="Async.fs" />
+    <Compile Include="Actors.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
