@@ -2,5 +2,6 @@
 
 [<EntryPoint>]
 let main argv =
-    Actors.runTests ()
+    // Actors.runTests ()
+    MVU.runProgram ()
     0 // return an integer exit code
