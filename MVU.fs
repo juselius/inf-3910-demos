@@ -50,13 +50,12 @@ let update msg model =
         printfn "- %d" n
         { model with sum = model.sum - n }, []
 
-
 let simEvent dispatch =
     let rnd = Random()
     let x = rnd.Next 10
     let y = rnd.Next 10
-    Threading.Thread.Sleep (x * 500)
     async {
+        Threading.Thread.Sleep (x * 500)
         if x > 4 then
             dispatch (Increment y)
         else
