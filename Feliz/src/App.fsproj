@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Interop.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Main.fs" />

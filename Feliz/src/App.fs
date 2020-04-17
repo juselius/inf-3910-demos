@@ -3,7 +3,6 @@ module App
 open Elmish
 open Feliz
 open Feliz.Bulma
-open Thoth.Fetch
 open Thoth.Json
 
 type Person = {
@@ -39,7 +38,7 @@ let fetchPeople model =
     let p () =
         promise {
             let people = Decode.fromString decoder TestData.data
-            return people //Fetch.tryGet(url, decoder = decoder)
+            return people
         }
     model, Cmd.OfPromise.either p () LoadHandler Exn
 
@@ -93,7 +92,7 @@ let render (model: Model) (dispatch: Msg -> unit) =
             prop.text "Decrement"
         ]
         Html.hr []
-        Bulma.title3 "People"
+        Bulma.title3 (Interop.Hello.hello "People")
         Bulma.button [
             if model.People.Length > 0 then prop.disabled true else button.isInfo
             prop.style [ style.marginRight 7 ]
