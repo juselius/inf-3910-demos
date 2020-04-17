@@ -1,0 +1,18 @@
+group Client
+    source https://api.nuget.org/v3/index.json
+    framework: netcoreapp3.1
+    storage: none
+    nuget Fable.Core ~> 3
+    nuget Fable.Elmish ~> 3
+    nuget Fable.Elmish.Debugger ~> 3
+    nuget Fable.Elmish.React ~> 3
+    nuget Fable.Elmish.HMR ~> 4
+    nuget Fable.React ~> 5
+    nuget Fable.Browser.Dom
+    nuget Fable.FontAwesome.Free
+    nuget Thoth.Fetch
+    nuget Thoth.Json
+    nuget Feliz
+    nuget Feliz.Bulma
+    nuget Zanaptak.TypedCssClasses
+
