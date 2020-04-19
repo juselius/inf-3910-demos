@@ -1,3 +1,3 @@
-export function hello(what) {
-    return `Hello ${what}!`
+export function hello(wat) {
+    return `Hello ${wat}!`
 }
