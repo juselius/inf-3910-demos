@@ -4,12 +4,7 @@ open Elmish
 open Feliz
 open Feliz.Bulma
 open Thoth.Json
-
-type Person = {
-    First : string
-    Last : string
-    Alias : string option
-}
+open Shared
 
 type Model = {
     Count: int
