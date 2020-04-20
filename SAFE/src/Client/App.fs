@@ -219,45 +219,38 @@ let chartsView model =
 
 
 let peopleView model dispatch =
-    let tbl =
-        Bulma.table [
-            table.isFullwidth
-            table.isStriped
-            prop.children [
-                Html.thead [
-                   Html.tr [
-                       Html.th [
-                           prop.text "First"
-                           prop.onClick (fun _ ->
-                                dispatch (Sort (toggleSortOrder model.Sort)))
-                       ]
-                       Html.th "Last"
-                       Html.th "Alias"
-                       Html.th "Age"
-                       Html.th "Height"
+    Bulma.table [
+        table.isFullwidth
+        table.isStriped
+        prop.children [
+            Html.thead [
+               Html.tr [
+                   Html.th [
+                       prop.text "First"
+                       prop.onClick (fun _ ->
+                            dispatch (Sort (toggleSortOrder model.Sort)))
                    ]
-                ]
-                Html.tbody [
-                    for i in model.People do
-                        Html.tr [
-                            Html.td i.First
-                            Html.td i.Last
-                            Html.td (Option.defaultValue "" i.Alias)
-                            Html.td i.Age
-                            Html.td i.Height
-                        ]
-                ]
+                   Html.th "Last"
+                   Html.th "Alias"
+                   Html.th "Age"
+                   Html.th "Height"
+               ]
+            ]
+            Html.tbody [
+                for i in model.People do
+                    Html.tr [
+                        Html.td i.First
+                        Html.td i.Last
+                        Html.td (Option.defaultValue "" i.Alias)
+                        Html.td i.Age
+                        Html.td i.Height
+                    ]
             ]
         ]
-    Html.div [
-        if model.People.Length > 0 then
-            tbl
-        else
-            Html.div []
     ]
 
 let counterView model dispatch =
-    Html.div [
+    Bulma.box [
         Bulma.title3 ("Strike counter: " + string model.Count)
         Bulma.button [
             button.isSuccess
@@ -319,7 +312,10 @@ let render (model: Model) (dispatch: Msg -> unit) =
         Bulma.section [
             Bulma.title3 (Interop.Hello.hello "People")
             addPersonView model dispatch
-            peopleView model dispatch
-            chartsView model
+            if model.People.Length > 0 then
+                Bulma.box [
+                    peopleView model dispatch
+                    chartsView model
+                ]
         ]
     ]
