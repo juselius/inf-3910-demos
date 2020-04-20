@@ -35,8 +35,7 @@ let init() =
     let decoder = Decode.Auto.generateDecoder<Counter> ()
     let p () =
         promise {
-            let people = Fetch.tryGet("/api/init", decoder = decoder)
-            return! people
+            return! Fetch.tryGet("/api/init", decoder = decoder)
         }
     let model = {
         Count = 0
@@ -60,13 +59,11 @@ let savePerson model =
     | Some pers ->
         let p () =
             promise {
-                let person =
-                    Fetch.tryPost (
-                        "/api/person",
-                        data = pers,
-                        decoder = decoder
-                    )
-                return! person
+                return! Fetch.tryPost (
+                    "/api/person",
+                    data = pers,
+                    decoder = decoder
+                )
             }
         model, Cmd.OfPromise.either p () SaveHandler Exn
     | None ->
@@ -216,7 +213,6 @@ let chartsView model =
         ]
     else
         Html.div []
-
 
 let peopleView model dispatch =
     Bulma.table [
