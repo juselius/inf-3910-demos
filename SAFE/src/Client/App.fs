@@ -54,15 +54,6 @@ let handleInit model =
         printfn "ERROR: addPerson (): %A" err
         model, Cmd.none
 
-let fetchPeople model =
-    let decoder = Decode.Auto.generateDecoder<Person list> ()
-    let p () =
-        promise {
-            let people = Fetch.tryGet("/api/people", decoder = decoder)
-            return! people
-        }
-    model, Cmd.OfPromise.either p () LoadHandler Exn
-
 let savePerson model =
     let decoder = Decode.Auto.generateDecoder<Person> ()
     match model.NewPerson with
@@ -92,6 +83,15 @@ let addPerson model =
     | Error err ->
         printfn "ERROR: addPerson (): %A" err
         model, Cmd.none
+
+let fetchPeople model =
+    let decoder = Decode.Auto.generateDecoder<Person list> ()
+    let p () =
+        promise {
+            let people = Fetch.tryGet("/api/people", decoder = decoder)
+            return! people
+        }
+    model, Cmd.OfPromise.either p () LoadHandler Exn
 
 let private toggleSortOrder (x : bool option) =
     if x.IsNone then
@@ -315,11 +315,11 @@ let addPersonView model dispatch =
 
 let render (model: Model) (dispatch: Msg -> unit) =
     Bulma.container [
-        counterView model dispatch
+        Bulma.section [ counterView model dispatch ]
         Bulma.section [
             Bulma.title3 (Interop.Hello.hello "People")
             addPersonView model dispatch
             peopleView model dispatch
+            chartsView model
         ]
-        chartsView model
     ]
