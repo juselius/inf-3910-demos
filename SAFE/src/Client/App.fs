@@ -121,6 +121,11 @@ let updatePerson model (update : Person -> Person) =
     let model' = { model with NewPerson = Some p' }
     model', Cmd.none
 
+let handleLoad model =
+    function
+    | Ok p -> { model with People = p }, Cmd.none
+    | Error err -> printfn "ERROR: %A" err; model, Cmd.none
+
 let updateFirst model s =
     updatePerson model (fun p -> { p with First = s })
 
@@ -143,10 +148,7 @@ let update (msg: Msg) (model : Model) =
     | Decrement -> { model with Count = model.Count - 1 }, Cmd.none
     | Exn exn -> printfn "EXN: %A" exn; model, Cmd.none
     | Load -> fetchPeople model
-    | LoadHandler x ->
-        match x with
-        | Ok p -> { model with People = p }, Cmd.none
-        | Error err -> printfn "ERROR: %A" err; model, Cmd.none
+    | LoadHandler x -> handleLoad model x
     | Sort x -> handleSort model x
     | Save -> savePerson model
     | SaveHandler p -> addPerson model p
