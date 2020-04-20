@@ -19,7 +19,7 @@ type Msg =
     | Decrement
     | Load
     | LoadHandler of Result<Person list, string>
-    | Save 
+    | Save
     | SaveHandler of Result<Person, string>
     | Exn of System.Exception
     | Sort of bool option
@@ -40,17 +40,23 @@ let fetchPeople model =
     let decoder = Decode.Auto.generateDecoder<Person list> ()
     let p () =
         promise {
-            let people = Fetch.tryGet("/api/people", decoder)
+            let people = Fetch.tryGet("/api/people", decoder = decoder)
             return! people
         }
     model, Cmd.OfPromise.either p () LoadHandler Exn
 
 let savePerson model =
-    match model.NewPerson with 
+    let decoder = Decode.Auto.generateDecoder<Person> ()
+    match model.NewPerson with
     | Some pers ->
         let p () =
             promise {
-                let person = Fetch.tryPost("/api/person", pers)
+                let person =
+                    Fetch.tryPost (
+                        "/api/person",
+                        data = pers,
+                        decoder = decoder
+                    )
                 return! person
             }
         model, Cmd.OfPromise.either p () SaveHandler Exn
@@ -59,10 +65,10 @@ let savePerson model =
         model, Cmd.none
 
 let addPerson model =
-    function 
+    function
     | Ok p ->
         { model with People = p :: model.People }, Cmd.none
-    | Error err -> 
+    | Error err ->
         printfn "ERROR: addPerson (): %A" err
         model, Cmd.none
 
@@ -88,6 +94,21 @@ let handleSort model order =
         } , Cmd.none
     | None -> fetchPeople { model with Sort = None }
 
+let updatePerson model (update : Person -> Person) =
+    let p = Option.defaultValue Person.New model.NewPerson
+    let p' = update p
+    let model' = { model with NewPerson = Some p' }
+    model', Cmd.none
+
+let updateFirst model s =
+    updatePerson model (fun p -> { p with First = s})
+
+let updateLast model s =
+    updatePerson model (fun p -> { p with Last = s})
+
+let updateAlias model s =
+    updatePerson model (fun p -> { p with Alias = Some s})
+
 let update (msg: Msg) (model : Model) =
     match msg with
     | Increment -> { model with Count = model.Count + 1 }, Cmd.none
@@ -99,15 +120,34 @@ let update (msg: Msg) (model : Model) =
         | Ok p -> { model with People = p }, Cmd.none
         | Error err -> printfn "ERROR: %A" err; model, Cmd.none
     | Sort x -> handleSort model x
-    | Save -> savePerson model 
+    | Save -> savePerson model
     | SaveHandler p -> addPerson model p
+    | UpdateFirst s -> updateFirst model s
+    | UpdateLast s -> updateLast model s
+    | UpdateAlias s -> updateAlias model s
 
-let render (model: Model) (dispatch: Msg -> unit) =
-    let textInp ph (msg : string -> Msg) =
+let addPersonView dispatch =
+    let input' ph (msg : string -> Msg) =
         Html.input [
             prop.placeholder ph
-            prop.onChange (msg >> dispatch) 
+            prop.onChange (msg >> dispatch)
         ]
+    Bulma.box [
+        Bulma.columns [
+            Bulma.column [ input' "First" UpdateFirst ]
+            Bulma.column [ input' "Last" UpdateLast ]
+            Bulma.column [ input' "Alias" UpdateAlias ]
+            Bulma.column [
+                Bulma.button [
+                    prop.text "Save"
+                    button.isDark
+                    prop.onClick (fun _ -> dispatch Save)
+                ]
+            ]
+        ]
+    ]
+
+let render (model: Model) (dispatch: Msg -> unit) =
     Bulma.container [
         Bulma.title3 ("Strike counter: " + string model.Count)
         Bulma.button [
@@ -128,18 +168,6 @@ let render (model: Model) (dispatch: Msg -> unit) =
             prop.style [ style.marginRight 7 ]
             prop.onClick (fun _ -> dispatch Load)
             prop.text "Load"
-        ]
-        Bulma.columns [
-            Bulma.column [ textInp "First" UpdateFirst ]
-            Bulma.column [ textInp "Last" UpdateLast ]
-            Bulma.column [ textInp "Alias" UpdateAlias ]
-            Bulma.column [ 
-                Bulma.button [
-                    prop.text "Save"
-                    button.isDark 
-                    prop.onClick (fun _ -> dispatch Save)
-                ] 
-            ]
         ]
         Bulma.table [
             table.isFullwidth
@@ -166,4 +194,5 @@ let render (model: Model) (dispatch: Msg -> unit) =
                 ]
             ]
         ]
+        addPersonView dispatch
     ]
