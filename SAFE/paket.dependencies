@@ -23,6 +23,7 @@ group Client
     nuget Thoth.Json
     nuget Feliz
     nuget Feliz.Bulma
+    nuget Feliz.Recharts
     nuget Zanaptak.TypedCssClasses
 
 group Build

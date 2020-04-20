@@ -3,6 +3,7 @@ module Client
 open Elmish
 open Feliz
 open Feliz.Bulma
+open Feliz.Recharts
 open Thoth.Json
 open Thoth.Fetch
 open Shared
@@ -69,7 +70,10 @@ let savePerson model =
 let addPerson model =
     function
     | Ok p ->
-        { model with People = p :: model.People }, Cmd.none
+        { model with
+            People = p :: model.People
+            NewPerson = None
+        }, Cmd.none
     | Error err ->
         printfn "ERROR: addPerson (): %A" err
         model, Cmd.none
@@ -136,57 +140,68 @@ let update (msg: Msg) (model : Model) =
     | UpdateAge n -> updateAge model n
     | UpdateHeight n -> updateHeight model n
 
-let addPersonView dispatch =
-    let input' ph (msg : string -> Msg) =
-        Html.input [
-            prop.placeholder ph
-            prop.onChange (msg >> dispatch)
-        ]
-    let iinput' ph (msg : int -> Msg) =
-        Html.input [
-            prop.type' "number"
-            prop.placeholder ph
-            prop.onChange (int >> msg >> dispatch)
-        ]
-    Bulma.box [
-        Bulma.columns [
-            Bulma.column [ input' "First" UpdateFirst ]
-            Bulma.column [ input' "Last" UpdateLast ]
-            Bulma.column [ input' "Alias" UpdateAlias ]
-            Bulma.column [ iinput' "Age" UpdateAge ]
-            Bulma.column [ iinput' "Height" UpdateHeight ]
-            Bulma.column [
-                Bulma.button [
-                    prop.text "Save"
-                    button.isDark
-                    prop.onClick (fun _ -> dispatch Save)
-                ]
+let lineChart model =
+    Recharts.lineChart [
+        lineChart.width 500
+        lineChart.height 300
+        lineChart.data model.People
+        lineChart.margin(top=5, right=30)
+        lineChart.children [
+            Recharts.cartesianGrid [ cartesianGrid.strokeDasharray(3, 3) ]
+            Recharts.xAxis [ xAxis.dataKey (fun point -> point.First) ]
+            Recharts.yAxis []
+            Recharts.tooltip []
+            Recharts.legend []
+            Recharts.line [
+                line.monotone
+                line.dataKey (fun point -> point.Age)
+                line.stroke "#8884d8"
+            ]
+
+            Recharts.line [
+                line.monotone
+                line.dataKey (fun point -> point.Height)
+                line.stroke "#82ca9d"
             ]
         ]
     ]
 
-let render (model: Model) (dispatch: Msg -> unit) =
-    Bulma.container [
-        Bulma.title3 ("Strike counter: " + string model.Count)
-        Bulma.button [
-            button.isSuccess
-            prop.style [ style.marginRight 7 ]
-            prop.onClick (fun _ -> dispatch Increment)
-            prop.text "Increment"
+let barChart model =
+    Recharts.barChart [
+        barChart.width 500
+        barChart.height 300
+        barChart.data model.People
+        barChart.margin(top=5, right=30)
+        barChart.children [
+            Recharts.cartesianGrid [ cartesianGrid.strokeDasharray(3, 3) ]
+            Recharts.xAxis [ xAxis.dataKey (fun point -> point.First) ]
+            Recharts.yAxis []
+            Recharts.tooltip []
+            Recharts.legend []
+            Recharts.bar [
+                bar.dataKey (fun point -> point.Age)
+                bar.fill "#8884d8"
+            ]
+
+            Recharts.bar [
+                bar.dataKey (fun point -> point.Height)
+                bar.fill "#82ca9d"
+            ]
         ]
-        Bulma.button [
-            button.isPrimary
-            prop.onClick (fun _ -> dispatch Decrement)
-            prop.text "Decrement"
+    ]
+
+let chartsView model =
+    if model.People.Length > 1 then
+        Bulma.columns [
+            Bulma.column [ lineChart model ]
+            Bulma.column [ barChart model ]
         ]
-        Html.hr []
-        Bulma.title3 (Interop.Hello.hello "People")
-        Bulma.button [
-            if model.People.Length > 0 then prop.disabled true else button.isInfo
-            prop.style [ style.marginRight 7 ]
-            prop.onClick (fun _ -> dispatch Load)
-            prop.text "Load"
-        ]
+    else
+        Html.div []
+
+
+let peopleView model dispatch =
+    let tbl =
         Bulma.table [
             table.isFullwidth
             table.isStriped
@@ -216,5 +231,77 @@ let render (model: Model) (dispatch: Msg -> unit) =
                 ]
             ]
         ]
-        addPersonView dispatch
+    Html.div [
+        if model.People.Length > 0 then
+            tbl
+        else
+            Html.div []
+    ]
+
+let counterView model dispatch =
+    Html.div [
+        Bulma.title3 ("Strike counter: " + string model.Count)
+        Bulma.button [
+            button.isSuccess
+            prop.style [ style.marginRight 7 ]
+            prop.onClick (fun _ -> dispatch Increment)
+            prop.text "Increment"
+        ]
+        Bulma.button [
+            button.isPrimary
+            prop.onClick (fun _ -> dispatch Decrement)
+            prop.text "Decrement"
+        ]
+    ]
+
+let addPersonView model dispatch =
+    let input' ph (msg : string -> Msg) =
+        Html.input [
+            prop.placeholder ph
+            prop.onChange (msg >> dispatch)
+        ]
+    let iinput' ph (msg : int -> Msg) =
+        Html.input [
+            prop.type' "number"
+            prop.placeholder ph
+            prop.onChange (int >> msg >> dispatch)
+        ]
+    Bulma.box [
+        Bulma.columns [
+            Bulma.column [ input' "First" UpdateFirst ]
+            Bulma.column [ input' "Last" UpdateLast ]
+            Bulma.column [ input' "Alias" UpdateAlias ]
+            Bulma.column [ iinput' "Age" UpdateAge ]
+            Bulma.column [ iinput' "Height" UpdateHeight ]
+        ]
+        Bulma.button [
+            prop.text "Save"
+            prop.style [ style.marginRight 8 ]
+            button.isDark
+            prop.onClick (fun _ -> dispatch Save)
+            if model.NewPerson.IsNone then
+                prop.disabled true
+            else
+                prop.disabled false
+        ]
+        Bulma.button [
+            if model.People.Length > 0 then
+                prop.disabled true
+            else
+                button.isInfo
+            prop.style [ style.marginRight 7 ]
+            prop.onClick (fun _ -> dispatch Load)
+            prop.text "Load"
+        ]
+    ]
+
+let render (model: Model) (dispatch: Msg -> unit) =
+    Bulma.container [
+        counterView model dispatch
+        Bulma.section [
+            Bulma.title3 (Interop.Hello.hello "People")
+            addPersonView model dispatch
+            peopleView model dispatch
+        ]
+        chartsView model
     ]

@@ -11,5 +11,6 @@ group Client
     Thoth.Json
     Feliz
     Feliz.Bulma
+    Feliz.Recharts
     Zanaptak.TypedCssClasses
 
