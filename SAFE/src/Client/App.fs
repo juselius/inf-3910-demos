@@ -16,6 +16,7 @@ type Model = {
 }
 
 type Msg =
+    | Init of Result<Counter, string>
     | Increment
     | Decrement
     | Load
@@ -31,13 +32,27 @@ type Msg =
     | UpdateHeight of int
 
 let init() =
+    let decoder = Decode.Auto.generateDecoder<Counter> ()
+    let p () =
+        promise {
+            let people = Fetch.tryGet("/api/init", decoder = decoder)
+            return! people
+        }
     let model = {
         Count = 0
         People = []
         Sort = None
         NewPerson = None
     }
-    model, Cmd.none
+    model, Cmd.OfPromise.either p () Init Exn
+
+let handleInit model =
+    function
+    | Ok counter ->
+        { model with Count = counter.Value }, Cmd.none
+    | Error err ->
+        printfn "ERROR: addPerson (): %A" err
+        model, Cmd.none
 
 let fetchPeople model =
     let decoder = Decode.Auto.generateDecoder<Person list> ()
@@ -123,6 +138,7 @@ let updateHeight model n =
 
 let update (msg: Msg) (model : Model) =
     match msg with
+    | Init c -> handleInit model c
     | Increment -> { model with Count = model.Count + 1 }, Cmd.none
     | Decrement -> { model with Count = model.Count - 1 }, Cmd.none
     | Exn exn -> printfn "EXN: %A" exn; model, Cmd.none
