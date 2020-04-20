@@ -1,34 +1,48 @@
 [
     {
-        "First": "Rabo",
-        "Last": "Ooof",
-        "Alias": "Fooabr"
+        "First": "Besser",
+        "Last": "Wisser",
+        "Age": 26,
+        "Height": 192
     },
     {
-        "First": "foo",
-        "Last": "bar"
+        "First": "Rabo",
+        "Last": "Ooof",
+        "Alias": "Foobar",
+        "Age": 52,
+        "Height": 173
     },
     {
         "First": "Maiken",
         "Last": "Melkerson",
-        "Alias": "Tjorven"
+        "Alias": "Tjorven",
+        "Age": 6,
+        "Height": 148
     },
     {
         "First": "Reodor",
-        "Last": "Felgen"
+        "Last": "Felgen",
+        "Age": 68,
+        "Height": 169
     },
     {
         "First": "Frøydis",
-        "Last": "Frukthage"
+        "Last": "Frukthage",
+        "Age": 79,
+        "Height": 163
     },
     {
         "First": "Mikhail",
         "Last": "Gorbatjov",
-        "Alias": "Gorbi"
+        "Alias": "Gorbi",
+        "Age": 89,
+        "Height": 171
     },
     {
         "First": "Melker",
         "Last": "Melkerson",
-        "Alias": "Gorbatjorven"
+        "Alias": "Gorbatjorven",
+        "Age": 51,
+        "Height": 186
     }
 ]

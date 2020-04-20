@@ -26,6 +26,8 @@ type Msg =
     | UpdateFirst of string
     | UpdateLast of string
     | UpdateAlias of string
+    | UpdateAge of int
+    | UpdateHeight of int
 
 let init() =
     let model = {
@@ -101,13 +103,19 @@ let updatePerson model (update : Person -> Person) =
     model', Cmd.none
 
 let updateFirst model s =
-    updatePerson model (fun p -> { p with First = s})
+    updatePerson model (fun p -> { p with First = s })
 
 let updateLast model s =
-    updatePerson model (fun p -> { p with Last = s})
+    updatePerson model (fun p -> { p with Last = s })
 
 let updateAlias model s =
-    updatePerson model (fun p -> { p with Alias = Some s})
+    updatePerson model (fun p -> { p with Alias = Some s })
+
+let updateAge model n =
+    updatePerson model (fun p -> { p with Age = n })
+
+let updateHeight model n =
+    updatePerson model (fun p -> { p with Height = n })
 
 let update (msg: Msg) (model : Model) =
     match msg with
@@ -125,6 +133,8 @@ let update (msg: Msg) (model : Model) =
     | UpdateFirst s -> updateFirst model s
     | UpdateLast s -> updateLast model s
     | UpdateAlias s -> updateAlias model s
+    | UpdateAge n -> updateAge model n
+    | UpdateHeight n -> updateHeight model n
 
 let addPersonView dispatch =
     let input' ph (msg : string -> Msg) =
@@ -132,11 +142,19 @@ let addPersonView dispatch =
             prop.placeholder ph
             prop.onChange (msg >> dispatch)
         ]
+    let iinput' ph (msg : int -> Msg) =
+        Html.input [
+            prop.type' "number"
+            prop.placeholder ph
+            prop.onChange (int >> msg >> dispatch)
+        ]
     Bulma.box [
         Bulma.columns [
             Bulma.column [ input' "First" UpdateFirst ]
             Bulma.column [ input' "Last" UpdateLast ]
             Bulma.column [ input' "Alias" UpdateAlias ]
+            Bulma.column [ iinput' "Age" UpdateAge ]
+            Bulma.column [ iinput' "Height" UpdateHeight ]
             Bulma.column [
                 Bulma.button [
                     prop.text "Save"
@@ -182,6 +200,8 @@ let render (model: Model) (dispatch: Msg -> unit) =
                        ]
                        Html.th "Last"
                        Html.th "Alias"
+                       Html.th "Age"
+                       Html.th "Height"
                    ]
                 ]
                 Html.tbody [
@@ -190,6 +210,8 @@ let render (model: Model) (dispatch: Msg -> unit) =
                             Html.td i.First
                             Html.td i.Last
                             Html.td (Option.defaultValue "" i.Alias)
+                            Html.td i.Age
+                            Html.td i.Height
                         ]
                 ]
             ]
