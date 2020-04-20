@@ -8,9 +8,10 @@ open Elmish
 open Elmish.React
 open Elmish.Debug
 open Elmish.HMR
+open Client
 
 // App
-Program.mkProgram App.init App.update App.render
+Program.mkProgram init update render
 #if DEBUG
 |> Program.withDebugger
 #endif
