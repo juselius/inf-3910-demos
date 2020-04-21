@@ -5,6 +5,8 @@
   <ItemGroup>
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="Interop.fs" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Charts.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
