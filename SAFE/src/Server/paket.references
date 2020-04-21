@@ -2,3 +2,4 @@ group Server
     FSharp.Core
     Giraffe
     Thoth.Json.Giraffe
+    Microsoft.EntityFrameworkCore.Design

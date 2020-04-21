@@ -4,8 +4,13 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Entity\Entity.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="../Shared/Shared.fs" />
+    <Compile Include="Db.fs" />
+    <Compile Include="Api.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
