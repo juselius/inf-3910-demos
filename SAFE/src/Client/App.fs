@@ -49,6 +49,13 @@ let handleInit model =
         printfn "ERROR: handleInit (): %A" err
         model, Cmd.none
 
+let private trimPerson p =
+    { p with
+        First = p.First.Trim ()
+        Last = p.Last.Trim ()
+        Alias = p.Alias |> Option.map (fun x -> x.Trim ())
+    }
+
 let savePerson model =
     let decoder = Decode.Auto.generateDecoder<PersonId> ()
     match model.NewPerson with
@@ -57,7 +64,7 @@ let savePerson model =
             promise {
                 return! Fetch.tryPost (
                     "/api/person",
-                    data = pers,
+                    data = trimPerson pers,
                     decoder = decoder
                 )
             }
@@ -74,7 +81,7 @@ let updatePerson model =
             promise {
                 return! Fetch.tryPut (
                     "/api/person",
-                    data = (pId, pers),
+                    data = (pId, trimPerson pers),
                     decoder = decoder
                 )
             }
@@ -140,13 +147,13 @@ let handleLoad model =
     | Error err -> printfn "ERROR: %A" err; model, Cmd.none
 
 let updateFirst model (s : string) =
-    setPerson model (fun p -> { p with First = s.Trim() })
+    setPerson model (fun p -> { p with First = s })
 
 let updateLast model (s : string) =
-    setPerson model (fun p -> { p with Last = s.Trim() })
+    setPerson model (fun p -> { p with Last = s })
 
 let updateAlias model (s : string) =
-    setPerson model (fun p -> { p with Alias = Some (s.Trim()) })
+    setPerson model (fun p -> { p with Alias = Some s })
 
 let updateAge model n =
     setPerson model (fun p -> { p with Age = n })
