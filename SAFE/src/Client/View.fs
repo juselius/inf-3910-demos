@@ -42,7 +42,7 @@ let peopleView model dispatch =
                         Html.td i.Height
                         Html.td [
                             Bulma.button [
-                                button.isLight
+                                button.isSmall
                                 prop.onClick (fun _ -> dispatch (Edit i))
                                 prop.children [
                                     Html.div [ prop.className "fa fa-edit"]
@@ -51,7 +51,7 @@ let peopleView model dispatch =
                         ]
                         Html.td [
                             Bulma.button [
-                                button.isLight
+                                button.isSmall
                                 prop.onClick (fun _ -> dispatch (Delete i))
                                 prop.children [
                                     Html.div [ prop.className "fa fa-trash"]
@@ -96,11 +96,26 @@ let addPersonView model dispatch =
     let (pId, p) = Option.defaultValue (0, Person.New) model.NewPerson
     Bulma.box [
         Bulma.columns [
-            Bulma.column [ input' "First" UpdateFirst p.First ]
-            Bulma.column [ input' "Last" UpdateLast p.Last ]
-            Bulma.column [ input' "Alias" UpdateAlias (Option.defaultValue "" p.Alias)]
-            Bulma.column [ iinput' "Age" UpdateAge p.Age ]
-            Bulma.column [ iinput' "Height" UpdateHeight p.Height ]
+            Bulma.column [
+                Bulma.label "First name"
+                input' "First" UpdateFirst p.First
+            ]
+            Bulma.column [
+                Bulma.label "Last name"
+                input' "Last" UpdateLast p.Last
+            ]
+            Bulma.column [
+                Bulma.label "Alias"
+                input' "Alias" UpdateAlias (Option.defaultValue "" p.Alias)
+            ]
+            Bulma.column [
+                Bulma.label "Age"
+                iinput' "Age" UpdateAge p.Age
+            ]
+            Bulma.column [
+                Bulma.label "Height"
+                iinput' "Height" UpdateHeight p.Height
+            ]
         ]
         Bulma.button [
             if pId > 0 then
