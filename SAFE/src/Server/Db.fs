@@ -41,23 +41,23 @@ let fromPerson (p : Person) =
 
 let createPerson (person : Person) =
     let entry = fromPerson person
-    let f (ctx : Entity.DataContext) =
+    let qry (ctx : Entity.DataContext) =
         ctx.Add entry |> ignore
         ctx.SaveChanges () |> ignore
         entry.PersonId
-    runDb f
+    runDb qry
 
 let getPerson (firstName : string) (lastName : string) =
-    let f (ctx : Entity.DataContext ) =
+    let qry (ctx : Entity.DataContext ) =
         query {
             for i in ctx.People do
-                find (i.First.Contains firstName || i.Last.Contains lastName)
+                find (i.First.Contains firstName && i.Last.Contains lastName)
         }
-    runDb f
+    runDb qry
     |> Result.map (fun p -> (p.PersonId, toPerson p))
 
 let updatePerson (pId : int) (person : Person) =
-    let f (ctx : Entity.DataContext ) =
+    let qry (ctx : Entity.DataContext ) =
         query {
             for i in ctx.People do
                 where (i.PersonId = pId)
@@ -76,10 +76,10 @@ let updatePerson (pId : int) (person : Person) =
             ctx.SaveChanges () |> ignore
         )
         |> ignore
-    runDb f
+    runDb qry
 
 let deletePerson (pId : int) =
-    let f (ctx : Entity.DataContext ) =
+    let qry (ctx : Entity.DataContext ) =
         query {
             for i in ctx.People do
                 where (i.PersonId = pId)
@@ -90,14 +90,14 @@ let deletePerson (pId : int) =
             ctx.SaveChanges () |> ignore
         )
         |> ignore
-    runDb f
+    runDb qry
 
 let getPeople () =
-    let f (ctx : Entity.DataContext ) =
+    let qry (ctx : Entity.DataContext ) =
         query {
             for i in ctx.People do
                 select i
         }
-    runDb f
+    runDb qry
     |> Result.map (Seq.toList >> List.map toPerson)
 
