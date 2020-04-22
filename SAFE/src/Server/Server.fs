@@ -20,8 +20,8 @@ let port =
 let webApp : HttpHandler =
     choose [
         GET >=> route "/api/init" >=> handleInit
-        GET >=> route "/api/people" >=> handleReadPeople
-        GET >=> routef "/api/person/%s/%s" handleReadPerson
+        GET >=> route "/api/people" >=> handleGetPeople
+        GET >=> routef "/api/person/%s/%s" handleGetPerson
         route "/api/person"
             >=> choose [
                 POST   >=> handleAddPerson

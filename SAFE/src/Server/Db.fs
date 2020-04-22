@@ -47,7 +47,7 @@ let createPerson (person : Person) =
         entry.PersonId
     runDb f
 
-let readPerson (firstName : string) (lastName : string) =
+let getPerson (firstName : string) (lastName : string) =
     let f (ctx : Entity.DataContext ) =
         query {
             for i in ctx.People do
@@ -92,7 +92,7 @@ let deletePerson (pId : int) =
         |> ignore
     runDb f
 
-let readPeople () =
+let getPeople () =
     let f (ctx : Entity.DataContext ) =
         query {
             for i in ctx.People do
