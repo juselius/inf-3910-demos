@@ -15,7 +15,7 @@ type Msg =
     | Load
     | LoadHandler of Result<Person list, string>
     | Save
-    | SaveHandler of Result<Person, string>
+    | SaveHandler of Result<PersonId, string>
     | Exn of System.Exception
     | Sort of bool option
     | UpdateFirst of string
@@ -23,6 +23,12 @@ type Msg =
     | UpdateAlias of string
     | UpdateAge of int
     | UpdateHeight of int
+    | Edit of Person
+    | StartEdit of Result<PersonId * Person, string>
+    | Delete of Person
+    | DoDelete of Result<PersonId * Person, string>
+    | Update
+
 
 let init () =
     let decoder = Decode.Auto.generateDecoder<Counter> ()
@@ -43,13 +49,13 @@ let handleInit model =
     | Ok counter ->
         { model with Count = counter.Value }, Cmd.none
     | Error err ->
-        printfn "ERROR: addPerson (): %A" err
+        printfn "ERROR: handleInit (): %A" err
         model, Cmd.none
 
 let savePerson model =
-    let decoder = Decode.Auto.generateDecoder<Person> ()
+    let decoder = Decode.Auto.generateDecoder<PersonId> ()
     match model.NewPerson with
-    | Some pers ->
+    | Some (_, pers) ->
         let p () =
             promise {
                 return! Fetch.tryPost (
@@ -63,15 +69,35 @@ let savePerson model =
         printfn "WARNING: savePerson (): not reached."
         model, Cmd.none
 
-let addPerson model =
+let updatePerson model =
+    let decoder = Decode.Auto.generateDecoder<PersonId> ()
+    match model.NewPerson with
+    | Some (pId, pers) ->
+        let p () =
+            promise {
+                return! Fetch.tryPut (
+                    "/api/person",
+                    data = (pId, pers),
+                    decoder = decoder
+                )
+            }
+        model, Cmd.OfPromise.either p () SaveHandler Exn
+    | None ->
+        printfn "WARNING: updatePerson (): not reached."
+        model, Cmd.none
+
+let commitPerson model =
     function
-    | Ok p ->
-        { model with
-            People = p :: model.People
-            NewPerson = None
-        }, Cmd.none
+    | Ok _ ->
+        if model.NewPerson.IsSome then
+            { model with
+                People = (snd model.NewPerson.Value) :: model.People
+                NewPerson = None
+            }, Cmd.none
+        else
+            model, Cmd.none
     | Error err ->
-        printfn "ERROR: addPerson (): %A" err
+        printfn "ERROR: savePerson: %A" err
         model, Cmd.none
 
 let fetchPeople model =
@@ -105,10 +131,10 @@ let handleSort model order =
         } , Cmd.none
     | None -> fetchPeople { model with Sort = None }
 
-let updatePerson model (update : Person -> Person) =
-    let p = Option.defaultValue Person.New model.NewPerson
+let setPerson model (update : Person -> Person) =
+    let (pId, p) = Option.defaultValue (0, Person.New) model.NewPerson
     let p' = update p
-    let model' = { model with NewPerson = Some p' }
+    let model' = { model with NewPerson = Some (pId, p') }
     model', Cmd.none
 
 let handleLoad model =
@@ -116,20 +142,67 @@ let handleLoad model =
     | Ok p -> { model with People = p }, Cmd.none
     | Error err -> printfn "ERROR: %A" err; model, Cmd.none
 
-let updateFirst model s =
-    updatePerson model (fun p -> { p with First = s })
+let updateFirst model (s : string) =
+    setPerson model (fun p -> { p with First = s.Trim() })
 
-let updateLast model s =
-    updatePerson model (fun p -> { p with Last = s })
+let updateLast model (s : string) =
+    setPerson model (fun p -> { p with Last = s.Trim() })
 
-let updateAlias model s =
-    updatePerson model (fun p -> { p with Alias = Some s })
+let updateAlias model (s : string) =
+    setPerson model (fun p -> { p with Alias = Some (s.Trim()) })
 
 let updateAge model n =
-    updatePerson model (fun p -> { p with Age = n })
+    setPerson model (fun p -> { p with Age = n })
 
 let updateHeight model n =
-    updatePerson model (fun p -> { p with Height = n })
+    setPerson model (fun p -> { p with Height = n })
+
+type Promp = (unit -> Fable.Core.JS.Promise<Result<(PersonId * Person),string>>) ->  Cmd<Msg>
+
+let getPerson (model : Model) (person : Person) (cmd : Promp) =
+    let decoder = Decode.Auto.generateDecoder<PersonId * Person> ()
+    let req = sprintf "/api/person/%s/%s" person.First person.Last
+    let p () =
+        promise {
+            return! Fetch.tryGet(req, decoder = decoder)
+        }
+    model, cmd p
+
+let handleEdit model (person : Person) =
+    getPerson model person (fun p -> Cmd.OfPromise.either p () StartEdit Exn)
+
+let handleStartEdit model p =
+    match p with
+    | Ok person ->
+        let model' =
+            { model with
+                NewPerson = Some person
+                People =
+                    model.People
+                    |> List.filter ((<>) (snd person) )
+        }
+        model', Cmd.none
+    | Error err ->
+        printfn "ERROR: handleStartEdit: %s" err
+        model, Cmd.none
+
+let handleDelete model (person : Person) =
+    getPerson model person (fun p -> Cmd.OfPromise.either p () DoDelete Exn)
+
+let handleCommitDelete model p =
+    let decoder = Decode.Auto.generateDecoder<unit> ()
+    match p with
+    | Ok (pId, person) ->
+        let p () =
+            promise {
+              return! Fetch.delete ("/api/person", pId, decoder = decoder)
+            }
+        let people = model.People |> List.filter ((<>) person)
+        let model' = { model with People = people }
+        model', Cmd.OfPromise.attempt p () Exn
+    | Error err ->
+        printfn "ERROR: handleCommitDelete: %s" err
+        model, Cmd.none
 
 let update (msg: Msg) (model : Model) =
     match msg with
@@ -141,13 +214,17 @@ let update (msg: Msg) (model : Model) =
     | LoadHandler x -> handleLoad model x
     | Sort x -> handleSort model x
     | Save -> savePerson model
-    | SaveHandler p -> addPerson model p
+    | SaveHandler p -> commitPerson model p
     | UpdateFirst s -> updateFirst model s
     | UpdateLast s -> updateLast model s
     | UpdateAlias s -> updateAlias model s
     | UpdateAge n -> updateAge model n
     | UpdateHeight n -> updateHeight model n
-
+    | Edit p -> handleEdit model p
+    | StartEdit p -> handleStartEdit model p
+    | Delete p -> handleDelete model p
+    | DoDelete p -> handleCommitDelete model p
+    | Update -> updatePerson model
 
 let peopleView model dispatch =
     Bulma.table [
@@ -165,6 +242,14 @@ let peopleView model dispatch =
                    Html.th "Alias"
                    Html.th "Age"
                    Html.th "Height"
+                   Html.th [
+                        prop.width 5
+                        prop.text "Edit"
+                   ]
+                   Html.th [
+                        prop.width 5
+                        prop.text "Remove"
+                   ]
                ]
             ]
             Html.tbody [
@@ -175,6 +260,24 @@ let peopleView model dispatch =
                         Html.td (Option.defaultValue "" i.Alias)
                         Html.td i.Age
                         Html.td i.Height
+                        Html.td [
+                            Bulma.button [
+                                button.isLight
+                                prop.onClick (fun _ -> dispatch (Edit i))
+                                prop.children [
+                                    Html.div [ prop.className "fa fa-edit"]
+                                ]
+                            ]
+                        ]
+                        Html.td [
+                            Bulma.button [
+                                button.isLight
+                                prop.onClick (fun _ -> dispatch (Delete i))
+                                prop.children [
+                                    Html.div [ prop.className "fa fa-trash"]
+                                ]
+                            ]
+                        ]
                     ]
             ]
         ]
@@ -197,30 +300,39 @@ let counterView model dispatch =
     ]
 
 let addPersonView model dispatch =
-    let input' ph (msg : string -> Msg) =
+    let input' ph (msg : string -> Msg) (value : string) =
         Html.input [
             prop.placeholder ph
             prop.onChange (msg >> dispatch)
+            prop.value value
         ]
-    let iinput' ph (msg : int -> Msg) =
+    let iinput' ph (msg : int -> Msg) (value : int) =
         Html.input [
             prop.type' "number"
             prop.placeholder ph
             prop.onChange (int >> msg >> dispatch)
+            prop.value value
         ]
+    let (pId, p) = Option.defaultValue (0, Person.New) model.NewPerson
     Bulma.box [
         Bulma.columns [
-            Bulma.column [ input' "First" UpdateFirst ]
-            Bulma.column [ input' "Last" UpdateLast ]
-            Bulma.column [ input' "Alias" UpdateAlias ]
-            Bulma.column [ iinput' "Age" UpdateAge ]
-            Bulma.column [ iinput' "Height" UpdateHeight ]
+            Bulma.column [ input' "First" UpdateFirst p.First ]
+            Bulma.column [ input' "Last" UpdateLast p.Last ]
+            Bulma.column [ input' "Alias" UpdateAlias (Option.defaultValue "" p.Alias)]
+            Bulma.column [ iinput' "Age" UpdateAge p.Age ]
+            Bulma.column [ iinput' "Height" UpdateHeight p.Height ]
         ]
         Bulma.button [
-            prop.text "Save"
-            prop.style [ style.marginRight 8 ]
-            button.isDark
-            prop.onClick (fun _ -> dispatch Save)
+            if pId > 0 then
+                prop.text "Update"
+                prop.style [ style.marginRight 8 ]
+                button.isDark
+                prop.onClick (fun _ -> dispatch Update)
+            else
+                prop.text "Save"
+                prop.style [ style.marginRight 8 ]
+                button.isDark
+                prop.onClick (fun _ -> dispatch Save)
             if model.NewPerson.IsNone then
                 prop.disabled true
             else

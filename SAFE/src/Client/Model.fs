@@ -3,10 +3,12 @@ module Model
 
 open Shared
 
+type PersonId = int
+
 type Model = {
     Count: int
     People : Person list
     Sort : bool option
-    NewPerson : Person option
+    NewPerson : (PersonId * Person) option
 }
 
