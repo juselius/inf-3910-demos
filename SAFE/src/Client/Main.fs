@@ -11,7 +11,7 @@ open Elmish.HMR
 open Client
 
 // App
-Program.mkProgram init update render
+Program.mkProgram init update View.render
 #if DEBUG
 |> Program.withDebugger
 #endif
