@@ -7,8 +7,13 @@ open Shared
 
 let handleInit next (ctx : HttpContext) =
     task {
-        let counter = { Value = 42 }
-        return! json counter next ctx
+        match Db.getPeople () with
+        | Ok people ->
+            let counter = { Value = people.Length }
+            return! json counter next ctx
+        | Error err ->
+            let counter = { Value = 42 }
+            return! json counter next ctx
     }
 
 let handleGetPeople next (ctx : HttpContext) =
