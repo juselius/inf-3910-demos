@@ -6,13 +6,13 @@ open Thoth.Fetch
 open Shared
 
 type Msg =
-    | Init of Result<Counter, string>
+    | Init of Result<Counter, FetchError>
     | Increment
     | Decrement
     | Load
-    | LoadHandler of Result<Person list, string>
+    | LoadHandler of Result<Person list, FetchError>
     | Save
-    | SaveHandler of Result<PersonId, string>
+    | SaveHandler of Result<PersonId, FetchError>
     | Exn of System.Exception
     | Sort of bool option
     | UpdateFirst of string
@@ -21,9 +21,9 @@ type Msg =
     | UpdateAge of int
     | UpdateHeight of int
     | Edit of Person
-    | StartEdit of Result<PersonId * Person, string>
+    | StartEdit of Result<PersonId * Person, FetchError>
     | Delete of Person
-    | DoDelete of Result<PersonId * Person, string>
+    | DoDelete of Result<PersonId * Person, FetchError>
     | Update
 
 
@@ -161,7 +161,7 @@ let updateAge model n =
 let updateHeight model n =
     setPerson model (fun p -> { p with Height = n })
 
-type Promp = (unit -> Fable.Core.JS.Promise<Result<(PersonId * Person),string>>) ->  Cmd<Msg>
+type Promp = (unit -> Fable.Core.JS.Promise<Result<(PersonId * Person), FetchError>>) ->  Cmd<Msg>
 
 let getPerson (model : Model) (person : Person) (cmd : Promp) =
     let decoder = Decode.Auto.generateDecoder<PersonId * Person> ()
@@ -175,7 +175,7 @@ let getPerson (model : Model) (person : Person) (cmd : Promp) =
 let handleEdit model (person : Person) =
     getPerson model person (fun p -> Cmd.OfPromise.either p () StartEdit Exn)
 
-let handleStartEdit model p =
+let handleStartEdit model (p : Result<PersonId * Person, FetchError>) =
     match p with
     | Ok person ->
         let model' =
@@ -187,13 +187,13 @@ let handleStartEdit model p =
         }
         model', Cmd.none
     | Error err ->
-        printfn "ERROR: handleStartEdit: %s" err
+        printfn "ERROR: handleStartEdit: %A" err
         model, Cmd.none
 
 let handleDelete model (person : Person) =
     getPerson model person (fun p -> Cmd.OfPromise.either p () DoDelete Exn)
 
-let handleCommitDelete model p =
+let handleCommitDelete model (p : Result<PersonId * Person, FetchError>) =
     let decoder = Decode.Auto.generateDecoder<unit> ()
     match p with
     | Ok (pId, person) ->
@@ -205,7 +205,7 @@ let handleCommitDelete model p =
         let model' = { model with People = people }
         model', Cmd.OfPromise.attempt p () Exn
     | Error err ->
-        printfn "ERROR: handleCommitDelete: %s" err
+        printfn "ERROR: handleCommitDelete: %A" err
         model, Cmd.none
 
 let update (msg: Msg) (model : Model) =
