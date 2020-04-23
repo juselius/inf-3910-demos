@@ -22,7 +22,7 @@ let toPerson (p : Entity.Person) =
     {
         First = p.First
         Last = p.Last
-        Alias = Some p.Alias
+        Alias = if p.Alias = null then None else Some p.Alias
         Age = p.Age
         Height = p.Height
     }
