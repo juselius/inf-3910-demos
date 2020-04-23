@@ -38,3 +38,18 @@ group Build
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
 
+group Tests
+    source https://api.nuget.org/v3/index.json
+    framework: netcoreapp3.1
+    storage: none
+
+    nuget FSharp.Core
+    nuget Argu
+    nuget Expecto
+    nuget Expecto.BenchmarkDotNet
+    nuget Expecto.FsCheck
+    nuget Expecto.Hopac
+    nuget Microsoft.NET.Test.Sdk
+    nuget YoloDev.Expecto.TestSdk
+    nuget canopy
+    nuget Selenium.WebDriver.ChromeDriver
