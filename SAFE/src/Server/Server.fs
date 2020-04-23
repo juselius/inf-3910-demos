@@ -11,7 +11,11 @@ open Api
 
 let tryGetEnv = System.Environment.GetEnvironmentVariable >> function null | "" -> None | x -> Some x
 
-let publicPath = Path.GetFullPath "../Client/public"
+let publicPath =
+    tryGetEnv "CONTENT_ROOT"
+    |> function
+    | Some root -> Path.GetFullPath root
+    | None -> Path.GetFullPath "../Client/public"
 
 let port =
     "SERVER_PORT"
