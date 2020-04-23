@@ -2,13 +2,12 @@ module View
 
 open Feliz
 open Feliz.Bulma
-open Feliz.Recharts
 open Shared
 open Client
 
 let peopleView model dispatch =
     Bulma.table [
-        table.isFullwidth
+        table.isFullWidth
         table.isStriped
         prop.children [
             Html.thead [
@@ -41,7 +40,7 @@ let peopleView model dispatch =
                         Html.td i.Age
                         Html.td i.Height
                         Html.td [
-                            Bulma.button [
+                            Bulma.button.button [
                                 button.isSmall
                                 prop.onClick (fun _ -> dispatch (Edit i))
                                 prop.children [
@@ -50,7 +49,7 @@ let peopleView model dispatch =
                             ]
                         ]
                         Html.td [
-                            Bulma.button [
+                            Bulma.button.button [
                                 button.isSmall
                                 prop.onClick (fun _ -> dispatch (Delete i))
                                 prop.children [
@@ -65,15 +64,18 @@ let peopleView model dispatch =
 
 let counterView model dispatch =
     Bulma.box [
-        Bulma.title3 ("Strike counter: " + string model.Count)
-        Bulma.button [
-            button.isSuccess
+        Bulma.title.h3 [
+            prop.text ("Strike counter: " + string model.Count)
+            prop.id "strike"
+        ]
+        Bulma.button.button [
+            color.isSuccess
             prop.style [ style.marginRight 7 ]
             prop.onClick (fun _ -> dispatch Increment)
             prop.text "Increment"
         ]
-        Bulma.button [
-            button.isPrimary
+        Bulma.button.button [
+            color.isPrimary
             prop.onClick (fun _ -> dispatch Decrement)
             prop.text "Decrement"
         ]
@@ -85,6 +87,7 @@ let addPersonView model dispatch =
             prop.placeholder ph
             prop.onChange (msg >> dispatch)
             prop.value value
+            prop.id ph
         ]
     let iinput' ph (msg : int -> Msg) (value : int) =
         Html.input [
@@ -92,6 +95,7 @@ let addPersonView model dispatch =
             prop.placeholder ph
             prop.onChange (int >> msg >> dispatch)
             prop.value value
+            prop.id ph
         ]
     let (pId, p) = Option.defaultValue (0, Person.New) model.NewPerson
     Bulma.box [
@@ -117,30 +121,32 @@ let addPersonView model dispatch =
                 iinput' "Height" UpdateHeight p.Height
             ]
         ]
-        Bulma.button [
+        Bulma.button.button [
             if pId > 0 then
                 prop.text "Update"
                 prop.style [ style.marginRight 8 ]
-                button.isDark
+                color.isDark
                 prop.onClick (fun _ -> dispatch Update)
             else
                 prop.text "Save"
                 prop.style [ style.marginRight 8 ]
-                button.isDark
+                color.isDark
                 prop.onClick (fun _ -> dispatch Save)
             if model.NewPerson.IsNone then
                 prop.disabled true
             else
                 prop.disabled false
+            prop.id "Save"
         ]
-        Bulma.button [
+        Bulma.button.button [
             if model.People.Length > 0 then
                 prop.disabled true
             else
-                button.isInfo
+                color.isInfo
             prop.style [ style.marginRight 7 ]
             prop.onClick (fun _ -> dispatch Load)
             prop.text "Load"
+            prop.id "Load"
         ]
     ]
 
@@ -148,7 +154,7 @@ let render (model: Model) (dispatch: Msg -> unit) =
     Bulma.container [
         Bulma.section [ counterView model dispatch ]
         Bulma.section [
-            Bulma.title3 (Interop.Hello.hello "People")
+            Bulma.title.h3 (Interop.Hello.hello "People")
             addPersonView model dispatch
             if model.People.Length > 0 then
                 Bulma.box [
