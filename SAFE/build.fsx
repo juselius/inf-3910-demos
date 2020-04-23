@@ -11,6 +11,7 @@ open System
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
+open Fake.SystemHelper
 
 Target.initEnvironment ()
 
@@ -18,6 +19,7 @@ let serverPath = Path.getFullName "./src/Server"
 let clientPath = Path.getFullName "./src/Client"
 let clientDeployPath = Path.combine clientPath "deploy"
 let deployDir = Path.getFullName "./deploy"
+let publicDir = Path.getFullName "./deploy/public"
 
 let release = ReleaseNotes.load "RELEASE_NOTES.md"
 
@@ -108,10 +110,19 @@ Target.create "Run" (fun _ ->
     |> ignore
 )
 
+Target.create "Release" (fun _ ->
+    let result =
+        DotNet.exec (DotNet.Options.withWorkingDirectory serverPath) "publish" "-c Release -o ../../deploy"
+    if result.ExitCode <> 0 then failwithf "'dotnet publish' failed in %s" serverPath
+    runTool yarnTool "webpack -p --output-path ./deploy/public" __SOURCE_DIRECTORY__
+)
 
-
-
-
+Target.create "Debug" (fun _ ->
+    let result =
+        DotNet.exec (DotNet.Options.withWorkingDirectory serverPath) "publish" "-c Debug -o ../../deploy"
+    if result.ExitCode <> 0 then failwithf "'dotnet publish' failed in %s" serverPath
+    runTool yarnTool "webpack -d --output-path ./deploy/public" __SOURCE_DIRECTORY__
+)
 
 open Fake.Core.TargetOperators
 
@@ -123,5 +134,13 @@ open Fake.Core.TargetOperators
 "Clean"
     ==> "InstallClient"
     ==> "Run"
+
+"Clean"
+    ==> "InstallClient"
+    ==> "Release"
+
+"Clean"
+    ==> "InstallClient"
+    ==> "Debug"
 
 Target.runOrDefaultWithArguments "Build"
