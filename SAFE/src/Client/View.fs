@@ -151,6 +151,7 @@ let addPersonView model dispatch =
     ]
 
 let render (model: Model) (dispatch: Msg -> unit) =
+    Html.div [
     Bulma.container [
         Bulma.section [ counterView model dispatch ]
         Bulma.section [
@@ -162,4 +163,6 @@ let render (model: Model) (dispatch: Msg -> unit) =
                     Charts.chartsView model
                 ]
         ]
+    ]
+    // LoginPage.loginPage (Login >> dispatch)
     ]

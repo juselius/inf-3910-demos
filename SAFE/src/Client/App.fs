@@ -25,7 +25,7 @@ type Msg =
     | Delete of Person
     | DoDelete of Result<PersonId * Person, FetchError>
     | Update
-
+    | Login of LoginPage.Model
 
 let init () =
     let decoder = Decode.Auto.generateDecoder<Counter> ()
@@ -229,3 +229,4 @@ let update (msg: Msg) (model : Model) =
     | Delete p -> handleDelete model p
     | DoDelete p -> handleCommitDelete model p
     | Update -> updatePerson model
+    | Login m -> printfn "LOGIN: %A" m; model, Cmd.none
