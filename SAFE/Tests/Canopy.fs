@@ -1,6 +1,5 @@
 module Testing.UI
 
-open OpenQA.Selenium.Chrome
 open canopy.types
 open canopy.runner.classic
 open canopy.configuration
@@ -13,9 +12,13 @@ type CanopyMode =
     | Browser = 1
     | Headless = 2
 
-let topDir = Path.GetFullPath <| __SOURCE_DIRECTORY__ + "/.."
-let deployDir = Path.GetFullPath <| topDir + "/deploy"
-let contentRoot = Path.GetFullPath <| deployDir + "/public"
+let fpJoin a b =
+    Path.Join [| a ; b |]
+    |> Path.GetFullPath
+
+let topDir = fpJoin __SOURCE_DIRECTORY__ ".."
+let deployDir =  fpJoin topDir "deploy"
+let contentRoot =  fpJoin deployDir "public"
 let homeDir =
     if Environment.OSVersion.Platform = PlatformID.Unix || Environment.OSVersion.Platform = PlatformID.MacOSX then
         Environment.GetEnvironmentVariable("HOME")
@@ -24,7 +27,7 @@ let homeDir =
 
 let buildProject () =
     let p = new Process()
-    p.StartInfo.FileName <- "/usr/bin/env"
+    p.StartInfo.FileName <- "/usr/bin/env" // windows users, fix this or use wls or devcontainer
     p.StartInfo.Arguments <- "fake build -t debug"
     p.StartInfo.WorkingDirectory <- topDir
     p.Start () |> ignore
@@ -33,23 +36,35 @@ let buildProject () =
 let runServer () =
     let p = new Process()
     System.Environment.SetEnvironmentVariable ("CONTENT_ROOT", contentRoot)
-    p.StartInfo.FileName <- "/usr/bin/env"
+    p.StartInfo.FileName <- "/usr/bin/env" // windows users, fix this or use wsl or devcontainer
     p.StartInfo.Arguments <- "dotnet Server.dll"
     p.StartInfo.WorkingDirectory <- deployDir
     p.Start () |> ignore
     Async.Sleep 2000 |> Async.RunSynchronously
     p
 
+// Hack for nixos
 let setChromeDir () =
-    let nixDir = Path.Join [| homeDir; ".nix-profile/bin" |]
+    let nixDir = fpJoin homeDir ".nix-profile/bin"
     if Directory.Exists nixDir then
         chromeDir <- nixDir
     else
         ()
 
+let addPerson f l a a' h =
+    "#First" << f
+    "#Last" << l
+    "#Alias" << a
+    "#Age" << a'
+    "#Height" << h
+    click "#Save"
+
 let testUI (mode : CanopyMode) =
     setChromeDir ()
-    buildProject ()
+    if not (File.Exists (Path.Join [| deployDir; "Server" |])) then
+        buildProject ()
+    else
+        ()
     let server = runServer ()
 
     match mode with
@@ -57,29 +72,25 @@ let testUI (mode : CanopyMode) =
     | _ -> start BrowserStartMode.Chrome
 
     //this is how you define a test
-    "taking canopy for a spin" &&& fun _ ->
+    "test canopy" &&& fun _ ->
         url "http://localhost:8085"
         ".title.is-3" *= "Hello People!"
-        "#First" << "Foo"
-        "#Last" << "Bar"
-        "#Age" << "10"
-        "#Height" << "155"
-        click "#Save"
-        "#First" << "Reodor"
-        "#Last" << "Felgen"
-        "#Age" << "73"
-        "#Height" << "165"
-        click "#Save"
-        "#First" << "Frøydis"
-        "#Last" << "Frukthage"
-        "#Age" << "43"
-        "#Height" << "171"
-        click "#Save"
+
+    "add people" &&& fun _ ->
+        url "http://localhost:8085"
+        addPerson "Foo" "Bar" "Raboof" "10" "147"
+        addPerson "Reodor" "Felgen" "" "73" "165"
+        addPerson "Frøydis" "Frukthage" "" "43" "171"
+
+    "load people" &&& fun _ ->
+        url "http://localhost:8085"
         reload ()
         click "#Load"
+
     run ()
     if mode = CanopyMode.Browser then
-        Async.Sleep 5000 |> Async.RunSynchronously
+        // keep the browser open for 10 seconds
+        Async.Sleep 10000 |> Async.RunSynchronously
     else
         ()
     quit ()

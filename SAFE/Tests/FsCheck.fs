@@ -53,7 +53,7 @@ type PersonGen() =
 let config' = {
     FsCheckConfig.defaultConfig with
         arbitrary = [typeof<PersonGen>]
-        maxTest = 10
+        maxTest = 1000
     }
 
 [<Tests>]
@@ -65,7 +65,7 @@ let properties =
                 Expect.isNotNull x.Last "Last name should not be null"
                 Expect.isGreaterThan x.Age 0 "Age should be larger than 0"
                 Expect.isLessThan x.Age 100 "Age should not be larger than 100"
-                Expect.isLessThanOrEqual x.Height 100 "Height should not be larger than 200"
+                Expect.isLessThanOrEqual x.Height 200 "Height should not be larger than 200"
             )
 
         testPropertyWithConfig config' "Converting to Entity.Person and back is idempotent"
