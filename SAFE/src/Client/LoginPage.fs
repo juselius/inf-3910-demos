@@ -10,6 +10,10 @@ type Model = {
     Remember : bool
 }
 
+type Props = {
+    OnLogin : Model -> unit
+}
+
 type private Msg =
     | UpdateEmail of string
     | UpdatePassword of string
@@ -128,9 +132,10 @@ let private loginPage' onLogin model dispatch =
     ]
 
 let private loginComponent =
-    React.functionComponent ("LoginPage", fun (onLogin : Model -> unit) ->
+    React.functionComponent ("LoginPage", fun (props : Props) ->
         let model, dispatch = React.useReducer (update, initialModel)
+        let onLogin = React.useCallback props.OnLogin // memoize the callback
         loginPage' onLogin model dispatch
     )
 
-let loginPage (onLogin : Model -> unit) = loginComponent onLogin
+let loginPage (onLogin : Model -> unit) = loginComponent { OnLogin = onLogin }
