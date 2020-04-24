@@ -24,6 +24,7 @@ group Client
     nuget Thoth.Json
     nuget Feliz
     nuget Feliz.Bulma
+    nuget Feliz.Router
     nuget Feliz.Recharts
     nuget Zanaptak.TypedCssClasses
 
