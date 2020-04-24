@@ -2,6 +2,7 @@ module View
 
 open Feliz
 open Feliz.Bulma
+open Feliz.Router
 open Shared
 open Client
 
@@ -138,31 +139,82 @@ let addPersonView model dispatch =
                 prop.disabled false
             prop.id "Save"
         ]
-        Bulma.button.button [
-            if model.People.Length > 0 then
-                prop.disabled true
-            else
-                color.isInfo
-            prop.style [ style.marginRight 7 ]
-            prop.onClick (fun _ -> dispatch Load)
-            prop.text "Load"
-            prop.id "Load"
+    ]
+
+let homePage model dispatch =
+    Html.div [
+        Bulma.navbar [
+            color.isInfo
+            prop.children [
+                Bulma.navbarStart.div [
+                    Bulma.navbarItem.div [
+                        Bulma.title.h4 [
+                            prop.text "INF-3910-5"
+                            prop.style [ style.color color.white ]
+                        ]
+                    ]
+                ]
+                Bulma.navbarEnd.div [
+                    Bulma.navbarItem.div [
+                        if model.User.IsNone then
+                            Bulma.button.a [
+                                prop.onClick (fun _ ->
+                                    dispatch (UrlChanged [ "login" ]))
+                                color.isLight
+                                prop.text "Login"
+                            ]
+                        else
+                            Html.h5 [
+                                prop.text (string model.User)
+                                prop.style [ style.marginRight 10 ]
+                            ]
+                            Bulma.button.a [
+                                prop.onClick (fun _ -> dispatch Logout)
+                                color.isLight
+                                prop.text "Logout"
+                                button.isOutlined
+                            ]
+                    ]
+                ]
+            ]
+        ]
+        Bulma.container [
+            Bulma.section [ counterView model dispatch ]
+            Bulma.section [
+                Bulma.title.h3 (Interop.Hello.hello "People")
+                if model.User.IsSome then
+                    addPersonView model dispatch
+                Bulma.button.button [
+                    if model.People.Length > 0 then
+                        prop.disabled true
+                    else
+                        color.isInfo
+                    prop.style [ style.marginRight 7 ]
+                    prop.onClick (fun _ -> dispatch Load)
+                    prop.text "Load"
+                    prop.id "Load"
+                ]
+                if model.People.Length > 0 then
+                    Bulma.box [
+                        peopleView model dispatch
+                        Charts.chartsView model
+                    ]
+            ]
         ]
     ]
 
+let loginPage model dispatch =
+    LoginPage.loginPage (Login >> dispatch)
+
 let render (model: Model) (dispatch: Msg -> unit) =
-    Html.div [
-    Bulma.container [
-        Bulma.section [ counterView model dispatch ]
-        Bulma.section [
-            Bulma.title.h3 (Interop.Hello.hello "People")
-            addPersonView model dispatch
-            if model.People.Length > 0 then
-                Bulma.box [
-                    peopleView model dispatch
-                    Charts.chartsView model
-                ]
-        ]
-    ]
-    // LoginPage.loginPage (Login >> dispatch)
+    let currentPage =
+        match model.CurrentUrl with
+        | [] -> homePage model dispatch
+        | [ "login" ] -> loginPage  model dispatch
+        | [ "unauthorized"; err ] -> Html.h3 ("Not authorized: " + err)
+        | _ -> Html.h1 "Page not found"
+
+    Router.router [
+        Router.onUrlChanged (UrlChanged >> dispatch)
+        Router.application currentPage
     ]

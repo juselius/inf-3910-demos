@@ -26,20 +26,28 @@ type Msg =
     | DoDelete of Result<PersonId * Person, FetchError>
     | Update
     | Login of LoginPage.Model
+    | Logout
+    | LoginHandler of Result<string option, FetchError>
+    | UrlChanged of string list
 
 let init () =
-    let decoder = Decode.Auto.generateDecoder<Counter> ()
-    let p () =
-        promise {
-            return! Fetch.tryGet("/api/init", decoder = decoder)
-        }
+    let user = Decode.Auto.generateDecoder<string option> ()
+    let counter = Decode.Auto.generateDecoder<Counter> ()
+    let p1 () = promise { return! Fetch.tryGet("/api/me", decoder = user) }
+    let p2 () = promise { return! Fetch.tryGet("/api/init", decoder = counter) }
     let model = {
         Count = 0
         People = []
         Sort = None
         NewPerson = None
+        CurrentUrl = []
+        User = None
     }
-    model, Cmd.OfPromise.either p () Init Exn
+    let cmd = Cmd.batch [
+        Cmd.OfPromise.either p1 () LoginHandler Exn
+        Cmd.OfPromise.either p2 () Init Exn
+    ]
+    model, cmd
 
 let handleInit model =
     function
@@ -208,8 +216,42 @@ let handleCommitDelete model (p : Result<PersonId * Person, FetchError>) =
         printfn "ERROR: handleCommitDelete: %A" err
         model, Cmd.none
 
+let handleLogin (model : Model) (m : LoginPage.Model) =
+    let decoder = Decode.Auto.generateDecoder<string option> ()
+    let p () =
+        promise {
+            return! Fetch.tryPost (
+                "/api/login",
+                data = (m.Email, m.Password),
+                decoder = decoder
+            )
+        }
+    model, Cmd.OfPromise.either p () LoginHandler Exn
+
+let handleLoginResult model =
+    function
+    | Ok usr ->
+        { model with
+            User = usr
+            CurrentUrl = []
+        }, Cmd.none
+    | Error err -> { model with CurrentUrl = [ "unauthorized"; string err ] }, Cmd.none
+
+let handleLogout (model : Model) =
+    let decoder = Decode.Auto.generateDecoder<unit> ()
+    let p () =
+        promise {
+            return! Fetch.get ("/signout", decoder = decoder)
+        }
+    let model' = { model with User = None }
+    model', Cmd.OfPromise.attempt p () Exn
+
 let update (msg: Msg) (model : Model) =
     match msg with
+    | UrlChanged x -> { model with CurrentUrl = x }, Cmd.none
+    | Login m -> handleLogin model m
+    | LoginHandler usr -> handleLoginResult model usr
+    | Logout -> handleLogout model
     | Init c -> handleInit model c
     | Increment -> { model with Count = model.Count + 1 }, Cmd.none
     | Decrement -> { model with Count = model.Count - 1 }, Cmd.none
@@ -229,4 +271,3 @@ let update (msg: Msg) (model : Model) =
     | Delete p -> handleDelete model p
     | DoDelete p -> handleCommitDelete model p
     | Update -> updatePerson model
-    | Login m -> printfn "LOGIN: %A" m; model, Cmd.none
