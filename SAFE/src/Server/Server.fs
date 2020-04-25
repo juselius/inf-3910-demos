@@ -8,18 +8,12 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.DependencyInjection
+open System.Security.Cryptography
 open System.Security.Claims
 open FSharp.Control.Tasks.V2
 
 open Giraffe
 open Api
-
-// in production, use bcrypt hasing for passwords!
-let users = [
-    "a", "b"
-    "admin@acme.com", "secret"
-    "user@contoso.com", "123"
-]
 
 let tryGetEnv = System.Environment.GetEnvironmentVariable >> function null | "" -> None | x -> Some x
 
@@ -40,10 +34,13 @@ let cookieChallenge (next : HttpFunc) (ctx : HttpContext) =
 let authorize (next : HttpFunc) (ctx : HttpContext) =
     requiresAuthentication cookieChallenge next ctx
 
+let validateUser (userName : string) (passwd : string) =
+    userName.Length > 1 && passwd.Length > 1
+
 let signIn (next : HttpFunc) (ctx : HttpContext) =
     task {
         let! user, password = ctx.BindJsonAsync<string * string> ()
-        if List.exists ((=) (user, password)) users then // not for production!
+        if validateUser user password then // not for production!
             let claims = [ Claim (ClaimTypes.Name, user) ]
             let identity = ClaimsIdentity (claims, CookieAuthenticationDefaults.AuthenticationScheme)
             let principal = ClaimsPrincipal identity
