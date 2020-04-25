@@ -29,6 +29,7 @@ let private emailField model dispatch =
                     prop.placeholder "bob@acme.com"
                     prop.required true
                     prop.onChange (UpdateEmail >> dispatch)
+                    prop.id "loginpage-email"
                 ]
                 Bulma.icon [
                     icon.isSmall
@@ -51,6 +52,7 @@ let private passwordField model dispatch =
                     prop.placeholder ""
                     prop.required true
                     prop.onChange (UpdatePassword >> dispatch)
+                    prop.id "loginpage-password"
                 ]
                 Bulma.icon [
                     icon.isSmall
@@ -84,6 +86,7 @@ let private loginField model onLogin =
             prop.text "Login"
             prop.onClick (fun _ -> if active then onLogin model)
             color.isPrimary
+            prop.id "loginpage-login"
         ]
     ]
 

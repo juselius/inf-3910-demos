@@ -74,16 +74,22 @@ let testUI (mode : CanopyMode) =
     //this is how you define a test
     "test canopy" &&& fun _ ->
         url "http://localhost:8085"
-        ".title.is-3" *= "Hello People!"
+        ".title.is-3" *= "Hello F# JS Interop!"
+
+    "login" &&& fun _ ->
+        click "#login"
+        "#loginpage-email" << "reodor"
+        "#loginpage-password" << "felgen"
+        click "#loginpage-login"
 
     "add people" &&& fun _ ->
-        url "http://localhost:8085"
+        // url "http://localhost:8085"
         addPerson "Foo" "Bar" "Raboof" "10" "147"
         addPerson "Reodor" "Felgen" "" "73" "165"
         addPerson "Frøydis" "Frukthage" "" "43" "171"
 
     "load people" &&& fun _ ->
-        url "http://localhost:8085"
+        // url "http://localhost:8085"
         reload ()
         click "#Load"
 

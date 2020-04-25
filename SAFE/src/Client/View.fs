@@ -180,6 +180,7 @@ let navBar model dispatch =
                                 dispatch (UrlChanged [ "login" ]))
                             color.isBlack
                             prop.text "Login"
+                            prop.id "login"
                         ]
                     else
                         Html.h5 [
