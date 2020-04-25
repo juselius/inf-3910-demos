@@ -13,22 +13,25 @@ let peopleView model dispatch =
         prop.children [
             Html.thead [
                Html.tr [
-                   Html.th [
-                       prop.text "First"
-                       prop.onClick (fun _ ->
-                            dispatch (Sort (toggleSortOrder model.Sort)))
-                   ]
-                   Html.th "Last"
-                   Html.th "Alias"
-                   Html.th "Age"
-                   Html.th "Height"
-                   Html.th [
-                        prop.width 5
-                        prop.text "Edit"
-                   ]
-                   Html.th [
-                        prop.width 5
-                        prop.text "Remove"
+                   prop.onClick (fun _ ->
+                        dispatch (Sort (toggleSortOrder model.Sort)))
+                   prop.children [
+                       Html.th [
+                           prop.text "First"
+
+                       ]
+                       Html.th "Last"
+                       Html.th "Alias"
+                       Html.th "Age"
+                       Html.th "Height"
+                       Html.th [
+                            prop.width 5
+                            prop.text "Edit"
+                       ]
+                       Html.th [
+                            prop.width 5
+                            prop.text "Remove"
+                       ]
                    ]
                ]
             ]
@@ -66,7 +69,7 @@ let peopleView model dispatch =
 let counterView model dispatch =
     Bulma.box [
         Bulma.title.h3 [
-            prop.text ("Strike counter: " + string model.Count)
+            prop.text ("Initial people counter: " + string model.Count)
             prop.id "strike"
         ]
         Bulma.button.button [
@@ -99,7 +102,9 @@ let addPersonView model dispatch =
             prop.id ph
         ]
     let (pId, p) = Option.defaultValue (0, Person.New) model.NewPerson
-    Bulma.box [
+    Bulma.panel [
+        Bulma.panelHeading [ Bulma.title.h5 "Add people" ]
+        Bulma.panelBlock.div [
         Bulma.columns [
             Bulma.column [
                 Bulma.label "First name"
@@ -125,12 +130,12 @@ let addPersonView model dispatch =
         Bulma.button.button [
             if pId > 0 then
                 prop.text "Update"
-                prop.style [ style.marginRight 8 ]
+                prop.style [ style.marginLeft 10 ]
                 color.isDark
                 prop.onClick (fun _ -> dispatch Update)
             else
                 prop.text "Save"
-                prop.style [ style.marginRight 8 ]
+                prop.style [ style.marginLeft 10 ]
                 color.isDark
                 prop.onClick (fun _ -> dispatch Save)
             if model.NewPerson.IsNone then
@@ -139,66 +144,74 @@ let addPersonView model dispatch =
                 prop.disabled false
             prop.id "Save"
         ]
+        ]
+    ]
+
+let loadButton model dispatch =
+    Bulma.field.div [
+        Bulma.button.button [
+            if model.People.Length > 0 then
+                prop.disabled true
+            else
+                color.isInfo
+            prop.style [ style.marginRight 7 ]
+            prop.onClick (fun _ -> dispatch Load)
+            prop.text "Load people"
+            prop.id "Load"
+        ]
+    ]
+
+let navBar model dispatch =
+    Bulma.navbar [
+        color.isLight
+        prop.children [
+            Bulma.navbarStart.div [
+                Bulma.navbarItem.div [
+                    Bulma.title.h4 [
+                        prop.text "INF-3910-5"
+                    ]
+                ]
+            ]
+            Bulma.navbarEnd.div [
+                Bulma.navbarItem.div [
+                    if model.User.IsNone then
+                        Bulma.button.a [
+                            prop.onClick (fun _ ->
+                                dispatch (UrlChanged [ "login" ]))
+                            color.isBlack
+                            prop.text "Login"
+                        ]
+                    else
+                        Html.h5 [
+                            prop.text (string model.User)
+                            prop.style [ style.marginRight 10 ]
+                        ]
+                        Bulma.button.a [
+                            prop.onClick (fun _ -> dispatch Logout)
+                            color.isBlack
+                            prop.text "Logout"
+                            button.isOutlined
+                        ]
+                ]
+            ]
+        ]
     ]
 
 let homePage model dispatch =
     Html.div [
-        Bulma.navbar [
-            color.isInfo
-            prop.children [
-                Bulma.navbarStart.div [
-                    Bulma.navbarItem.div [
-                        Bulma.title.h4 [
-                            prop.text "INF-3910-5"
-                            prop.style [ style.color color.white ]
-                        ]
-                    ]
-                ]
-                Bulma.navbarEnd.div [
-                    Bulma.navbarItem.div [
-                        if model.User.IsNone then
-                            Bulma.button.a [
-                                prop.onClick (fun _ ->
-                                    dispatch (UrlChanged [ "login" ]))
-                                color.isLight
-                                prop.text "Login"
-                            ]
-                        else
-                            Html.h5 [
-                                prop.text (string model.User)
-                                prop.style [ style.marginRight 10 ]
-                            ]
-                            Bulma.button.a [
-                                prop.onClick (fun _ -> dispatch Logout)
-                                color.isLight
-                                prop.text "Logout"
-                                button.isOutlined
-                            ]
-                    ]
-                ]
-            ]
-        ]
+        navBar model dispatch
         Bulma.container [
-            Bulma.section [ counterView model dispatch ]
-            Bulma.section [
-                Bulma.title.h3 (Interop.Hello.hello "People")
+            Bulma.title.h3 (Interop.Hello.hello "F# JS Interop")
+            Bulma.field.div [ counterView model dispatch ]
+            Bulma.field.div [
                 if model.User.IsSome then
                     addPersonView model dispatch
-                Bulma.button.button [
-                    if model.People.Length > 0 then
-                        prop.disabled true
-                    else
-                        color.isInfo
-                    prop.style [ style.marginRight 7 ]
-                    prop.onClick (fun _ -> dispatch Load)
-                    prop.text "Load"
-                    prop.id "Load"
-                ]
                 if model.People.Length > 0 then
                     Bulma.box [
                         peopleView model dispatch
                         Charts.chartsView model
                     ]
+                loadButton model dispatch
             ]
         ]
     ]
