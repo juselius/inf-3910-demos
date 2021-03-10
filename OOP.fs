@@ -28,34 +28,34 @@ type MyContact
       contact : ContactMethod,
       ?middleName : Name) = // optional argument to constuctor
 
-    // private property with default value
-    let middleOrDefault = defaultArg middleName ""
-    // private mutable prop (backing store)
-    let mutable dangerous = true
+    // private mutable prop (backing store) with default value
+    let mutable middle = defaultArg middleName ""
 
     // do stuff upon construction, must return ()
     do
-        printf "Hello "
+        printf "Hello from the constructor"
         printfn "%s %s" firstName lastName
 
     // alternative, overloaded constructor
     // must call primary constructor as final statement
     new () =
+        printfn "alt constructor"
         MyContact( "Reodor", "Felgen", Phone "1234321" )
 
     // initialze immutable properties, with implicit getters
     member this.FirstName = firstName
     member this.LastName = lastName
-    member this.MiddleName = middleOrDefault
-    member this.Contact = contact
 
-    // public property with getter and setter
-    member this.Danger
-        with get () = dangerous
-        and set x = dangerous <- x
+    member this.MiddleName
+        with get () = "(" + middle + ")"
+        and set x = middle <- x
 
     // automatic (mutable) property with getter and setter
-    member val DangerousToo = "careful, careful" with get, set
+    member val Contact = contact with get, set
+
+    member this.HasMiddleName () = middle <> ""
+
+    member this.HasMiddleName s = middle <> s
 
     // static member, without "this"
     static member Hello x = "Hello " + x
@@ -73,18 +73,17 @@ type MyContact
     // override default ToString from obj
     override this.ToString () =
         sprintf """
-           %s%s %s %A
-        """ this.FirstName (
-            match middleName with
-            | Some x -> " x"
-            | None -> ""
-            ) this.LastName this.Contact
+           %s %s %s %s
+        """ this.FirstName
+            middle
+            this.LastName
+            (this.ShowContact ())
 
 // type/class method extension
 // (see https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods)
 type MyContact with
     member this.FullName =
-        if this.MiddleName = "" then
+        if this.MiddleName <> "()" then
             sprintf "%s %s %s" this.FirstName this.MiddleName this.LastName
         else
             sprintf "%s %s" this.FirstName this.LastName
@@ -112,12 +111,12 @@ type IContactInfo =
 // ordinary record/union types can have members and implement interfaces
 type OtherContact =
     {
-        contact : ContactMethod
+        Contact : ContactMethod
     }
     // interface impementation
     interface IContactInfo with
         member this.ShowContact () =
-            prettyPrint this.contact
+            prettyPrint this.Contact
 
 // implementation of an interface using a _object expression_
 let prettyContact c =
@@ -133,15 +132,18 @@ type Overloaded =
     // member B is generic with a type _constraint_
     static member B<'T when 'T :> IContactInfo> (x: 'T) = x.ShowContact ()
 
-[<EntryPoint>]
-let main argv =
+// [<EntryPoint>]
+let test () =
     let x = MyContact()
     printfn "%A" x
     printfn "%s" x.FirstName
-    let y = { contact = EmailAndPhone ("hello@world.io", "123") }
+    let y = { Contact = EmailAndPhone ("hello@world.io", "123") }
     let y' = y :> IContactInfo
-    printfn "%s" <| y'.ShowContact ()
-    printfn "%s" <| Overloaded.B y
 
+    printfn "%s" <| y'.ShowContact ()
+    let z = prettyContact (EmailAndPhone ("hello@world.io", "123"))
+    printfn "%s" <| z.ShowContact ()
+
+    printfn "%s" <| Overloaded.B y
     0 // return an integer exit code
 

@@ -4,12 +4,21 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Poetry.fs" />
+    <Compile Include="Applicative.fs" />
+    <Compile Include="TDD.fs" />
+    <Compile Include="Church.fs" />
     <Compile Include="Fun.fs" />
+    <Compile Include="Matching.fs" />
+    <Compile Include="Recurse.fs" />
+    <Compile Include="Units.fs" />
     <Compile Include="CPS.fs" />
     <Compile Include="Async.fs" />
     <Compile Include="Actors.fs" />
     <Compile Include="MVU.fs" />
+    <Compile Include="Live.fs" />
+    <Compile Include="OOP.fs" />
+    <Compile Include="Reader.fs" />
+    <Compile Include="Monoid.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>
