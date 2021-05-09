@@ -7,19 +7,16 @@ let retn x = Reader (fun _ -> x)
 let run (Reader f) e = f e
 
 let bind (f : 'a -> Reader<'e, 'b>) (Reader g) =
-    Reader (fun e ->
-        let x = g e
-        run (f x) e
-    )
+    Reader (fun e -> run (f (g e)) e)
 
 let ask = Reader (fun e -> e)
 
 type ReaderBuilder() =
-    member x.Bind(v, f) = bind f v
+    member __.Bind(v, f) = bind f v
 
-    member x.Return v = retn v
+    member __.Return v = retn v
 
-    member x.ReturnFrom v = Reader (run v)
+    member __.ReturnFrom v = Reader (run v)
 
 let reader = ReaderBuilder()
 

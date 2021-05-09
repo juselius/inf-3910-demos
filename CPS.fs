@@ -2,8 +2,6 @@ module CPS
 
 let inline p x = printfn "%A" x
 
-type Cont<'r, 'a> = Cont of (('a -> 'r) -> 'r)
-
 // constant cps
 let five f = f 5
 five string |> p
@@ -12,13 +10,17 @@ five string |> p
 let five' = (|>) 5
 five' string |> p
 
+let theValueFive = five id
+
+let two = (|>) 2
+
 // weird and wonderful
-List.map ((|>) 2) [ (*) 2; (*) 3; (+) 42] |> p
+List.map two [ (*) 2; (*) 3; (+) 42] |> p
 
 // pythagoras direct
 let add = (+)
 let square x = x * x
-let pythagoras x y = add (square x) (square x)
+let pythagoras x y = add (square x) (square y)
 pythagoras 2 3 |> p
 
 // pythagoras cps
@@ -56,6 +58,8 @@ let (>>=) = chain
 let thriceM f x = (|>) x >>= f >>= f >>= f
 thriceM (addCPS 2) 3 p
 
+type Cont<'r, 'a> = Cont of (('a -> 'r) -> 'r)
+
 // Cont<r,a> functor
 module Cont =
     let map f x = fun g -> x (f >> g)
@@ -63,7 +67,7 @@ module Cont =
 
 // cont builder
 type ContBuilder() =
-  member x.Bind(a,b) = a >>= b
+  member x.Bind(a, b) = a >>= b
   member x.Return a = Cont.ret a
   member x.ReturnFrom a = a
 

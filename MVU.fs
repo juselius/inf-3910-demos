@@ -2,7 +2,7 @@ module MVU
 
 open System
 
-type Cmd<'Msg> = 'Msg list
+type Cmd<'Msg> = 'Msg list // free monoid
 
 type Program<'Model, 'Msg> = {
     init : unit -> 'Model * Cmd<'Msg>

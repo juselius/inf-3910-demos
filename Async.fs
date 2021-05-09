@@ -3,6 +3,10 @@ module AsyncDemo
 open System
 open System.Threading
 
+type Cont<'r, 'a> = Cont of (('a -> 'r) -> 'r)
+
+type Task<'a> = Task of (('a -> unit) -> unit)
+
 let inline p x = printfn "%A" x
 
 // simple async constant synchronously
@@ -32,6 +36,8 @@ let minutes ms =
         return m
     }
 
+let minutes' ms = (float ms) / 1000.0 / 60.0 |> async.Return
+
 let sleepy n =
   let rnd = Random ()
   let s = rnd.NextDouble () * 10000.0 |> int
@@ -43,8 +49,9 @@ let sleepy n =
 sleepy 4 |> Async.Start
 
 // parallel computation
-let l = List.unfold (fun n ->
-  if n > 0 then Some (sleepy n, n - 1) else None) 5
+let l =
+  5
+  |> List.unfold (fun n -> if n > 0 then Some (sleepy n, n - 1) else None)
 
 l |> Async.Parallel
   |> Async.Ignore

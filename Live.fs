@@ -1,58 +1,83 @@
 module Live
 
-let f x = x + 1
+#if INTERACTIVE
+#r "nuget: FSharpPlus"
+#load "monoids.txt.fs"
+#endif
 
-let g x = string x + "!"
+open FSharpPlus
+open System
+open System.Threading
 
-let h x y = if y = 0.0 then None else Some (float (f x) / y)
+type Cmd<'Msg> = 'Msg list // free monoid
 
-let a = g (h (f 1) (float (f 2)))
+type Program<'Model, 'Msg> = {
+    init : unit -> 'Model * Cmd<'Msg>
+    update : 'Msg -> 'Model -> 'Model * Cmd<'Msg>
+    view : 'Model -> ('Msg -> unit) -> unit
+}
 
-let inline (|>.) x f = f x
-let inline (.<|) f x = f x
+let run (program : Program<'Model, 'Msg>) =
+    let (model, initCmd) = program.init ()
+    let mvu = MailboxProcessor.Start (fun inbox ->
+        let rec loop (state : 'Model) =
+            async {
+                let! msg = inbox.Receive ()
+                let state' =
+                    try
+                        let (model', cmd') = program.update msg state
+                        program.view model' inbox.Post
+                        cmd' |> List.iter inbox.Post
+                        model'
+                    with ex ->
+                        printfn "Unable to process a message: %A" ex
+                        state
+                return! loop state'
+            }
+        loop model
+    )
+    printfn "starting event loop"
+    initCmd |> List.iter mvu.Post
 
-let inline (>>.) f g x = g (f x)
-let inline (.<<) f g x = f (g x)
+type Model = { sum : int }
 
-let b = f 2 |>. float |>. h (f 1) |>. g
-let b' =  g .<| (h (f 1) .<| (float .<| f 2))
+type Msg =
+    | Increment of int
+    | Decrement of int
 
-let fb = f >>. float >>. h (f 1) >>. g
-let fb' =  g .<< h (f 1) .<< float .<< f
+let init () : Model * Cmd<Msg> =
+    { sum = 0 }, [ Increment 0 ]
 
-let c  = fb 2
-let c' = fb' 2
+let update msg model =
+    match msg with
+    | Increment n ->
+        printfn "+ %d" n
+        { model with sum = model.sum + n }, []
+    | Decrement n ->
+        printfn "- %d" n
+        { model with sum = model.sum - n }, []
 
-type Outcome<'a> =
-    | Success of 'a
-    | Failure of string
-with
-    static member map f =
-        function
-        | Success x -> Success (f x)
-        | (Failure x) as y -> y
-    static member mapFailure f =
-        function
-        | Failure x -> f x |> Failure
-        | x -> x
-    static member apply f x =
-        match f with
-        | Success f' -> Outcome<_>.map f' x
-        | Failure x -> Failure x
-    static member pure = Success
+let simEvent dispatch =
+    let rnd = Random()
+    let x = rnd.NextDouble () * 500.0 |> int
+    let y = rnd.NextDouble () * 10.0 |> int
+    async {
+        Threading.Thread.Sleep x
+        if x > 4 then
+            dispatch (Increment y)
+        else
+            dispatch (Decrement y)
+    }
+    |> Async.Start
 
-let r1 : Outcome<int> = Outcome<_>.map f (Success 4)
-let r2 : Outcome<int> = Outcome<_>.mapFailure g (Failure "err")
+let view model dispatch =
+    printfn "SUM is %d" model.sum
+    simEvent dispatch
 
-let (<*>) = Outcome<_>.apply
-
-// let r3 : Outcome<float option> =
-let r3 =
-    Success f <*> Success 1
-
-let r3' =
-    Success f <*> Failure "err"
-
-// let r4 =
-//     let h' = Success h
-//     h' <*> Success (f 1) <*> Success 1.0
+let runProgram () =
+    {
+        init = init
+        update = update
+        view = view
+    } |> run
+    Threading.Thread.Sleep Threading.Timeout.Infinite

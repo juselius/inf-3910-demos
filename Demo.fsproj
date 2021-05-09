@@ -4,7 +4,10 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Composition.fs" />
+    <Compile Include="Functor.fs" />
     <Compile Include="Applicative.fs" />
+    <Compile Include="Monad.fs" />
     <Compile Include="TDD.fs" />
     <Compile Include="Church.fs" />
     <Compile Include="Fun.fs" />
@@ -15,10 +18,14 @@
     <Compile Include="Async.fs" />
     <Compile Include="Actors.fs" />
     <Compile Include="MVU.fs" />
-    <Compile Include="Live.fs" />
     <Compile Include="OOP.fs" />
     <Compile Include="Reader.fs" />
+    <Compile Include="monoids.txt.fs" />
     <Compile Include="Monoid.fs" />
+    <Compile Include="Live.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharpPlus" Version="1.1.7" />
   </ItemGroup>
 </Project>
